@@ -1,5 +1,6 @@
-
 services:
+  # 🗄️ BASE DE DATOS (TimescaleDB)
+  # Optimizada para series temporales (IoT)
   db:
     image: timescale/timescaledb:latest-pg14
     restart: always
@@ -10,29 +11,33 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
-    # Busca la sección healthcheck dentro de 'db' y cámbiala por esta:
+      - "5433:5432" # Puerto externo 5433 para no chocar con el Postgres local si tuvieras uno
     healthcheck:
-      # CORRECCIÓN DEFINITIVA: Usamos las variables de tu .env
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # 🧠 CEREBRO AGRO-TECH (Python + Flask)
+  # Ahora con 'oídos' para escuchar al ESP32
   agrobot:
     build: ./python_worker
     restart: always
+    ports:
+      - "5000:5000" # <--- ¡LA PUERTA MÁGICA! (Host:Contenedor)
     environment:
       - PYTHONUNBUFFERED=1
       - DB_HOST=db
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      # Coordenadas de la finca (Dos Hermanas)
       - SENSOR_LAT=37.28
       - SENSOR_LON=-5.92
     depends_on:
       db:
         condition: service_healthy
-    # 🛡️ PROTECCIÓN DE RECURSOS (Vital para Azure y Hardware viejo)
+    # 🛡️ Protección de Recursos (Edge Computing Friendly)
     deploy:
       resources:
         limits:
@@ -41,6 +46,7 @@ services:
         reservations:
           memory: 64M
 
+  # 📊 DASHBOARD VISUAL
   grafana:
     image: grafana/grafana:latest
     restart: always
@@ -58,6 +64,7 @@ services:
         limits:
           memory: 512M
 
+  # 🛠️ GESTIÓN DE BD (Opcional pero útil)
   adminer:
     image: adminer
     restart: always
