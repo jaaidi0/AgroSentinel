@@ -1,0 +1,16 @@
+venv/
+.git/
+.env
+*.pyc
+__pycache__/
+data/
+backups/
+docs/
+.azure/
+*.md
+docker-compose.yml
+.gitignore
+app.py
+static/
+tools/
+.env.example

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgroSentinel · Command Center</title>
+
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <header class="hero">
+      <h1>🌱 AGROSENTINEL · DOS HERMANAS</h1>
+      <p class="subtitle">Centro de mando · Lectura puntual</p>
+
+      <div class="status-bar">
+        <span class="api">
+          🛰️ Estado API: <strong class="ok">OK</strong>
+        </span>
+        <button id="btn-refresh">🔄 Actualizar</button>
+      </div>
+    </header>
+
+    <!-- CARDS -->
+    <section class="grid">
+
+      <!-- INVERNADERO -->
+      <article class="card ok">
+        <h2>🏠 Invernadero</h2>
+        <p class="device">ESP32_INVERNADERO_01</p>
+
+        <div class="metrics">
+          <div class="metric">
+            🌡️ TEMP
+            <strong>24.58 °C</strong>
+          </div>
+          <div class="metric">
+            💧 HUM
+            <strong>60.4 %</strong>
+          </div>
+          <div class="metric highlight">
+            🌿 VPD
+            <strong>1.22 kPa</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- EXTERIOR -->
+      <article class="card ok">
+        <h2>🌞 Exterior</h2>
+        <p class="device">ESP32_EXTERIOR_01</p>
+
+        <div class="metrics">
+          <div class="metric">
+            🌡️ TEMP
+            <strong>24.43 °C</strong>
+          </div>
+          <div class="metric">
+            💧 HUM
+            <strong>63.7 %</strong>
+          </div>
+          <div class="metric highlight">
+            🌿 VPD
+            <strong>1.11 kPa</strong>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- GRÁFICAS -->
+    <section class="grid">
+      <article class="card">
+        <h2>📈 Serie temporal · Invernadero</h2>
+        <canvas id="gh-chart" height="180"></canvas>
+      </article>
+
+      <article class="card">
+        <h2>📈 Serie temporal · Exterior</h2>
+        <canvas id="ex-chart" height="180"></canvas>
+      </article>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      ⏱️ Última actualización:
+      <strong>28/12/2025 · 01:22:08</strong>
+      · <a href="/api/latest" target="_blank">📄 JSON</a>
+    </footer>
+
+  </div>
+</body>
+</html>

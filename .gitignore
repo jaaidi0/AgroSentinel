@@ -1,5 +1,23 @@
+# Entorno Virtual (CRÍTICO: Azure no lo quiere)
+venv/
+antenv/
+env/
+
+# Datos y Persistencia
 postgres_data/
 grafana_data/
 n8n_data/
-python_worker/__pycache__/
+data/
+
+# Secretos y Logs
 .env
+*.log
+__pycache__/
+*.pyc
+
+# Backups y Basura
+backups/
+*.zip
+*.tar.gz
+docs/
+tools/

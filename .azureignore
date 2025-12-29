@@ -1,0 +1,15 @@
+venv/
+data/
+backups/
+docs/
+tools/
+.git/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+.env
+.vscode/
+.idea/
+node_modules/

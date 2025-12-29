@@ -1,0 +1,194 @@
+:root{
+  --bg:#0b1220;
+  --card:#111a2e;
+  --text:#e6eefc;
+  --muted:#9fb0cc;
+  --border:#1e2a44;
+  --accent:#6ca7ff;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.container{max-width:1200px;margin:auto;padding:20px}
+
+.hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.brand{display:flex;gap:12px;align-items:center}
+.logo{font-size:32px}
+
+.status button{
+  margin-left:12px;
+  padding:6px 12px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:#0f2139;
+  color:var(--text);
+  cursor:pointer;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+}
+
+.metrics{
+  display:flex;
+  justify-content:space-between;
+  margin-top:12px;
+}
+
+.metric span{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.metric strong{
+  font-size:20px;
+}
+
+.footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+}
+/* RESET */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* BASE */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0b1220;
+  color: #e6eefc;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 24px;
+}
+
+/* HEADER */
+.hero {
+  margin-bottom: 32px;
+}
+
+.hero h1 {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.subtitle {
+  color: #9fb2d1;
+  margin-top: 4px;
+  font-size: 16px;
+}
+
+.status-bar {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #1f3b64;
+  color: #fff;
+  font-size: 15px;
+}
+
+button:hover {
+  background: #295aa8;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+/* CARD */
+.card {
+  background: #111a2e;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+
+.card h2 {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.device {
+  color: #9fb2d1;
+  margin-bottom: 18px;
+}
+
+/* METRICS */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.metric {
+  background: #0c1527;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.metric strong {
+  display: block;
+  font-size: 26px;
+  margin-top: 6px;
+}
+
+/* VPD HIGHLIGHT */
+.metric.highlight {
+  border: 2px solid #ffd166;
+}
+
+/* STATES */
+.ok {
+  color: #2ecc71;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  color: #9fb2d1;
+  font-size: 14px;
+}
