@@ -39,4 +39,4 @@ EXPOSE 5000
 ENV PYTHONUNBUFFERED=1
 
 # Comando de inicio con gunicorn
-CMD ["gunicorn", "--bind=0.0.0.0:5000", "--timeout=600", "--workers=2", "main:app"]
+CMD exec gunicorn --bind :$PORT --workers 2 --timeout 600 main:app

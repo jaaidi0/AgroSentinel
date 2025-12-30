@@ -2,120 +2,97 @@ import os
 import math
 import logging
 import datetime as dt
+import google.generativeai as genai
 from flask import Flask, request, jsonify
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
-# Cargar variables de entorno desde .env si existe
 load_dotenv()
 
-# Configuración de Logging profesional
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Configuración de Logging Profesional
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# --- CONFIGURACIÓN DE CONEXIÓN ROBUSTA ---
+# --- CONFIGURACIÓN IA ---
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+ai_model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+# --- MOTOR DE BASE DE DATOS MEJORADO ---
 def get_engine():
-    # Usamos .get() con valores por defecto para evitar errores tipo 'None'
-    host = os.getenv("AZURE_DB_HOST")
-    dbname = os.getenv("AZURE_DB_NAME")
-    raw_user = os.getenv("AZURE_DB_USER")
-    password = os.getenv("AZURE_DB_PASSWORD")
-    port = os.getenv("AZURE_DB_PORT", "5432")  # Por defecto 5432 si es None
-
-    # Verificación de seguridad
-    if not all([host, dbname, raw_user, password]):
-        logger.error("❌ ERROR: Faltan variables de entorno (Host, User, Pass o DBName).")
-        raise RuntimeError("Configuración de base de datos incompleta.")
-
-    # Limpieza del @ para compatibilidad con Azure Flexible Server
-    user = raw_user.split('@')[0] if '@' in raw_user else raw_user
+    # Variables unificadas para máxima compatibilidad
+    user = os.getenv("DB_USER") or os.getenv("AZURE_DB_USER")
+    password = os.getenv("DB_PASSWORD") or os.getenv("AZURE_DB_PASSWORD")
+    db_name = os.getenv("DB_NAME") or os.getenv("AZURE_DB_NAME")
+    instance_connection = os.getenv("INSTANCE_CONNECTION_NAME")
     
-    # Construcción de la URL de conexión
-    db_url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
-    
-    logger.info(f"📡 Intentando conectar a la DB en: {host}")
-    
-    return create_engine(
-        db_url, 
-        connect_args={'sslmode': 'require'}, 
-        pool_pre_ping=True, 
-        future=True
-    )
+    try:
+        if instance_connection:
+            # ✅ MODO GOOGLE CLOUD (Socket de Unix)
+            db_url = f"postgresql+psycopg2://{user}:{password}@/{db_name}?host=/cloudsql/{instance_connection}"
+            logger.info(f"🌐 Conectando a Cloud SQL via Socket: {instance_connection}")
+            return create_engine(db_url, pool_pre_ping=True)
+        else:
+            # ✅ MODO LOCAL / AZURE (TCP)
+            host = os.getenv("DB_HOST") or os.getenv("AZURE_DB_HOST") or "localhost"
+            db_url = f"postgresql+psycopg2://{user}:{password}@{host}:5432/{db_name}"
+            # Solo forzar SSL si detectamos que es Azure
+            ssl_args = {'sslmode': 'require'} if host and "azure" in host.lower() else {}
+            return create_engine(db_url, connect_args=ssl_args, pool_pre_ping=True)
+    except Exception as e:
+        logger.error(f"❌ Error al configurar SQLAlchemy: {e}")
+        return None
 
-# Inicializar motor de base de datos
-try:
-    engine = get_engine()
-except Exception as e:
-    logger.critical(f"🔥 No se pudo inicializar el motor de DB: {e}")
-    engine = None
+engine = get_engine()
 
-def calculate_vpd(t_c: float, rh_pct: float) -> float:
-    """Calcula el Déficit de Presión de Vapor (VPD) usando la fórmula de Tetens."""
-    es = 0.6108 * math.exp((17.27 * t_c) / (t_c + 237.3))
-    return round(es * (1.0 - rh_pct / 100.0), 3)
+def calculate_vpd(t, rh):
+    es = 0.6108 * math.exp((17.27 * t) / (t + 237.3))
+    return round(es * (1.0 - rh / 100.0), 3)
 
-# --- RUTAS DE LA API ---
+def pedir_consejo_ia(t, rh, soil, vpd):
+    prompt = f"Como agrónomo experto de la UJI en Castellón, analiza: Temp {t}°C, HR {rh}%, Suelo {soil}%, VPD {vpd}kPa. Dame un consejo de riego breve (máximo 15 palabras)."
+    try:
+        response = ai_model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        logger.warning(f"⚠️ IA no disponible: {e}")
+        return "IA analizando tendencias climáticas..."
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({
-        "status": "AgroBot Online", 
-        "location": "Dos Hermanas",
-        "db_connected": engine is not None
-    }), 200
+    return jsonify({"status": "AgroBot Online", "db_connected": engine is not None}), 200
 
 @app.route('/ingest', methods=['POST'])
 def ingest():
     data = request.get_json(silent=True) or {}
-    
-    # Validación de datos de entrada (Telemetría básica)
-    required = ["temperaturec", "humiditypct", "soilpct"]
-    if not all(k in data for k in required):
-        return jsonify({"error": "Datos incompletos", "required": required}), 400
-
-    # Procesamiento Científico (VPD)
     try:
-        t = float(data["temperaturec"])
-        rh = float(data["humiditypct"])
-        soil = float(data["soilpct"])
-        vpd_server = calculate_vpd(t, rh)
-    except ValueError:
-        return jsonify({"error": "Formato de datos numéricos inválido"}), 400
-
-    payload = {
-        "ts": dt.datetime.now(dt.timezone.utc),
-        "device_id": data.get("deviceid", "unknown"),
-        "temperature_c": t,
-        "humidity_pct": rh,
-        "soil_pct": soil,
-        "vpd_kpa": vpd_server,
-        "vpd_client": data.get("vpdkpa"),
-        "source": data.get("source", "sim-wokwi")
-    }
-
-    # Persistencia en Azure
-    try:
-        if engine is None: raise Exception("Motor de DB no disponible")
+        t = float(data.get("temperaturec", 25))
+        rh = float(data.get("humiditypct", 50))
+        soil = float(data.get("soilpct", 30))
+        dev_id = data.get("deviceid", "ESP32_GENERIC")
         
-        with engine.begin() as conn:
-            conn.execute(text("""
-                INSERT INTO agro_telemetry 
-                (ts, device_id, temperature_c, humidity_pct, soil_pct, vpd_kpa, vpd_client, source)
-                VALUES (:ts, :device_id, :temperature_c, :humidity_pct, :soil_pct, :vpd_kpa, :vpd_client, :source)
-            """), payload)
+        vpd = calculate_vpd(t, rh)
+        consejo = pedir_consejo_ia(t, rh, soil, vpd)
         
-        logger.info(f"✅ Registro OK | Device: {payload['device_id']} | VPD: {vpd_server}")
-        return jsonify({"status": "stored", "vpd": vpd_server}), 201
+        db_status = "skipped"
+        if engine:
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text("""
+                        INSERT INTO agro_telemetry (ts, device_id, temperature_c, humidity_pct, soil_pct, vpd_kpa, source) 
+                        VALUES (:ts, :device_id, :t, :rh, :s, :v, :src)
+                    """), {
+                        "ts": dt.datetime.now(dt.timezone.utc),
+                        "device_id": dev_id, "t": t, "rh": rh, "s": soil, "v": vpd, "src": data.get("source", "sensor-network")
+                    })
+                db_status = "stored"
+            except Exception as e:
+                logger.error(f"🔥 Error en DB: {e}")
+                db_status = "error"
 
+        return jsonify({"status": db_status, "vpd": vpd, "ia_advice": consejo}), 201
     except Exception as e:
-        logger.error(f"❌ Error en persistencia: {e}")
-        return jsonify({"error": "Fallo al guardar en la nube"}), 500
+        return jsonify({"error": str(e)}), 400
 
 if __name__ == "__main__":
-    # El puerto 5000 es el estándar para despliegues en Azure y Docker
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
