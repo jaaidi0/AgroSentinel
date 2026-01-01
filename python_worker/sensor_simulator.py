@@ -7,15 +7,16 @@ from colorama import Fore, init
 
 init(autoreset=True)
 
-# URL final de tu servicio en Google Cloud
-API_URL = "https://agrosentinel-api-1061445067646.europe-west1.run.app/ingest"
+# 1. Priorizamos la variable de entorno, si no existe usamos la IP de Madrid
+# Línea 11 aproximadamente
+API_URL = "http://34.175.53.215:5000/ingest"
 SLEEP_S = 10
 
 def run_simulation():
+    # 2. Usamos API_URL que es la que tiene la dirección correcta
     print(f"{Fore.CYAN}🚀 AgroSentinel Sim v2.0 | Enviando a: {API_URL}")
 
     while True:
-        # Simulación de Dos Hermanas / Castellón
         temp = round(25.0 + 5 * math.sin(time.time()/3600), 2)
         hum = round(50.0 + random.uniform(-5, 5), 1)
         soil = round(30.0 + random.uniform(-2, 2), 1)
@@ -29,13 +30,19 @@ def run_simulation():
         }
 
         try:
-            r = requests.post(API_URL, json=payload, timeout=5)
-            if r.status_code == 201:
+            # 3. La petición ahora va a la IP de la VM en Madrid
+            r = requests.post(API_URL, json=payload, timeout=30)
+            if r.status_code in [200, 201]: # Aceptamos ambos códigos de éxito
                 res = r.json()
-                color = Fore.GREEN if res['status'] == 'stored' else Fore.YELLOW
-                print(f"{color}✅ DB: {res['status']} | VPD: {res['vpd']} | IA: {res['ia_advice']}")
+                # Ajustamos las claves según lo que devuelva tu API
+                status = res.get('status', 'ok')
+                vpd = res.get('vpd', 'N/A')
+                ia = res.get('ia_advice', 'Procesando...')
+                
+                color = Fore.GREEN if status == 'stored' else Fore.YELLOW
+                print(f"{color}✅ DB: {status} | VPD: {vpd} | IA: {ia}")
             else:
-                print(f"{Fore.RED}⚠️ Error API: {r.status_code}")
+                print(f"{Fore.RED}⚠️ Error API: {r.status_code} - {r.text}")
         except Exception as e:
             print(f"{Fore.RED}❌ Fallo de conexión: {e}")
 
