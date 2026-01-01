@@ -1,0 +1,165 @@
+{
+  "name": "AgroSentinel - Alerta y Persistencia",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 20
+            }
+          ]
+        }
+      },
+      "id": "1e0d4cfd-63b4-44c7-b036-7559bc054511",
+      "name": "Vigilar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT sensor_id, oil_level, time FROM sensor_data ORDER BY time DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "76b836ed-e922-45a5-88cb-1e194ff62479",
+      "name": "Consultar Azure Cloud",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        -512,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "a3zUJmlyh4BBSP2Q",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sensor_oil_level (device_id, oil_level_pct, ts) VALUES ('{{ $json.sensor_id }}', {{ $json.oil_level }}, '{{ $json.time }}');",
+        "options": {}
+      },
+      "id": "cd7a63eb-204a-4781-97db-72b9993bb062",
+      "name": "Guardar en Histórico",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "a3zUJmlyh4BBSP2Q",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.oil_level }}",
+              "value2": 20
+            }
+          ]
+        }
+      },
+      "id": "1c23b5ec-41f9-48c9-ab31-a2fb7f22216a",
+      "name": "¿Aceite < 20%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://defaultef4a684e81b5491ca98ec7b31be6c4.69.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6aaab9c6476444c48eaf24f11556761c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=cwxEbEMJWMLTiZzW1WSqMpz3cKbcOtZsD0B24eY4rOI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  \"type\": \"AdaptiveCard\",\n  \"version\": \"1.4\",\n  \"body\": [\n    { \"type\": \"TextBlock\", \"text\": \"🚨 ALERTA AGROSENTINEL - NIVEL CRÍTICO\", \"weight\": \"Bolder\", \"color\": \"Attention\" },\n    { \"type\": \"FactSet\", \"facts\": [\n        { \"title\": \"📉 Humedad Suelo:\", \"value\": $node[\"Consultar Azure Cloud\"].json[\"oil_level\"] + \"%\" },\n        { \"title\": \"🆔 Sensor:\", \"value\": $node[\"Consultar Azure Cloud\"].json[\"sensor_id\"] }\n      ]\n    }\n  ],\n  \"actions\": [\n    {\n      \"type\": \"Action.Http\",\n      \"title\": \"💧 Activar Riego Ahora\",\n      \"url\": \"http://TU_IP_O_URL:5000/irrigation/activate\",\n      \"method\": \"POST\",\n      \"body\": \"{\\\"device_id\\\": \\\"ESP32_INVERNADERO_01\\\"}\"\n    }\n  ],\n  \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n})\n}}",
+        "options": {}
+      },
+      "id": "9ac03e7b-624d-49ec-bfe7-dd46c71da9a3",
+      "name": "Alerta Teams Castellano",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        144,
+        144
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Vigilar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Consultar Azure Cloud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Azure Cloud": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Histórico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar en Histórico": {
+      "main": [
+        [
+          {
+            "node": "¿Aceite < 20%?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aceite < 20%?": {
+      "main": [
+        [
+          {
+            "node": "Alerta Teams Castellano",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8b747c43-d5ae-44c0-887d-29ff17acce74",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fc9b13bd5d2b1577f18774bf198d7e0597fb7b252dd4cbdc68fe077db518472"
+  },
+  "id": "9yXTk2ge7NQYKsD8",
+  "tags": []
+}

@@ -3,27 +3,34 @@ services:
     build: .
     container_name: agrodatasystem-api-1
     restart: always
-    # Esto inyecta automáticamente las variables de tu .env al contenedor
     env_file: .env 
-    environment:
-      - PYTHONUNBUFFERED=1
     ports:
       - "5000:5000"
-    working_dir: /app/python_worker
-    # Opcional: para ver cambios en el código sin rebuildear (solo desarrollo)
-    # volumes:
-    #   - ./python_worker:/app/python_worker
+    command: gunicorn --bind 0.0.0.0:5000 --timeout 120 python_worker.main:app
+    depends_on:
+      - database
+
+  database:
+    image: postgres:15
+    container_name: agrodatasystem-db-1
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: AgroUJI2025
+      POSTGRES_DB: agrodata
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   n8n:
     image: n8nio/n8n:latest
     container_name: agrodatasystem-n8n-1
     restart: always
+    environment:
+      - N8N_USER_MANAGEMENT_DISABLED=true  # <--- ESTO QUITA EL LOGIN TOTALMENTE
     ports:
       - "5678:5678"
-    environment:
-      - N8N_ENCRYPTION_KEY=AgroTech2025_Secret_Key
-      - N8N_USER_MANAGEMENT_DISABLED=false
-      - TZ=Europe/Madrid
     volumes:
       - ./data/n8n_data:/home/node/.n8n
 
@@ -33,9 +40,3 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      - GF_SECURITY_ALLOW_EMBEDDING=true
-      - GF_SERVER_TIMEZONE=Europe/Madrid
-      - TZ=Europe/Madrid
-    volumes:
-      - ./data/grafana_data:/var/lib/grafana

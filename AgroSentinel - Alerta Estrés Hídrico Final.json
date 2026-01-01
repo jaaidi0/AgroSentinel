@@ -1,0 +1,132 @@
+{
+  "name": "AgroSentinel - Alerta Estrés Hídrico Final",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "01b80f94-2af9-447d-90a4-c746a130f836",
+      "name": "Vigilar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT device_id AS \"Sensor\", temperature_c AS \"Temp\", humidity_pct AS \"HR\", vpd_kpa AS \"VPD\", ia_analysis AS \"Análisis\" FROM agro_telemetry ORDER BY ts DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "9411a749-f4e6-4a1a-88ad-981e6f253a2c",
+      "name": "Consultar Telemetría",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        256
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rW7LHQCY5JnSxIlg",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.VPD }}",
+              "operation": "larger",
+              "value2": 2
+            }
+          ]
+        }
+      },
+      "id": "12a959ce-47ca-4214-b82b-90c9111c65ff",
+      "name": "¿VPD > 2.0 kPa?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://defaultef4a684e81b5491ca98ec7b31be6c4.69.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6aaab9c6476444c48eaf24f11556761c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=cwxEbEMJWMLTiZzW1WSqMpz3cKbcOtZsD0B24eY4rOI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  \"type\": \"AdaptiveCard\",\n  \"version\": \"1.4\",\n  \"body\": [\n    { \"type\": \"TextBlock\", \"text\": \"🚨 ALERTA AGROSENTINEL - ESTRÉS HÍDRICO\", \"weight\": \"Bolder\", \"color\": \"Attention\" },\n    { \"type\": \"FactSet\", \"facts\": [\n        { \"title\": \"🌬️ VPD Actual:\", \"value\": $json.VPD + \" kPa\" },\n        { \"title\": \"🌡️ Temp:\", \"value\": $json.Temp + \" °C\" },\n        { \"title\": \"🆔 Sensor:\", \"value\": $json.Sensor }\n      ]\n    },\n    { \"type\": \"TextBlock\", \"text\": \"🤖 IA: \" + $json.Análisis, \"wrap\": true, \"italic\": true }\n  ],\n  \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n})\n}}",
+        "options": {}
+      },
+      "id": "8f3c5041-7a14-4c90-9deb-774a936ceccc",
+      "name": "Notificación Alerta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        176,
+        96
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Vigilar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Consultar Telemetría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Telemetría": {
+      "main": [
+        [
+          {
+            "node": "¿VPD > 2.0 kPa?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿VPD > 2.0 kPa?": {
+      "main": [
+        [
+          {
+            "node": "Notificación Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f6e22dda-d619-4400-95d4-10367a4bb98c",
+  "meta": {
+    "instanceId": "06b532f837145fbedd3ee30f6a7fce4f9dabe468995bf6160771606029f7293f"
+  },
+  "id": "P8cPoLIRxOoZVkUx",
+  "tags": []
+}
