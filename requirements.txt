@@ -5,3 +5,6 @@ psycopg2-binary
 requests
 python-dotenv
 google-generativeai
+edge-tts
+requests
+Pillow

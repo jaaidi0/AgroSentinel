@@ -1,0 +1,120 @@
+{
+  "name": "AgroSentinel - Alerta IA y Persistencia (Madrid)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "64cec03b-4629-42af-8427-56d195aff26d",
+      "name": "Vigilar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT device_id, soil_pct, ia_analysis FROM agro_telemetry ORDER BY ts DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "4939175b-5370-4a74-8ba2-61c5716f440b",
+      "name": "Consultar Telemetría Madrid",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "fK5b0ti68jUxc8dQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.soil_pct }}",
+              "value2": 20,
+              "operator": "smaller"
+            }
+          ]
+        }
+      },
+      "id": "acf87cbc-2d2b-4fed-b87d-a5a1200d9d4a",
+      "name": "¿Humedad < 20%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        496,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://defaultef4a684e81b5491ca98ec7b31be6c4.69.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6aaab9c6476444c48eaf24f11556761c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=cwxEbEMJWMLTiZzW1WSqMpz3cKbcOtZsD0B24eY4rOI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  \"type\": \"AdaptiveCard\",\n  \"version\": \"1.4\",\n  \"body\": [\n    { \"type\": \"TextBlock\", \"text\": \"🚨 ALERTA AGROSENTINEL - NIVEL CRÍTICO\", \"weight\": \"Bolder\", \"color\": \"Attention\" },\n    { \"type\": \"FactSet\", \"facts\": [\n        { \"title\": \"📉 Humedad Suelo:\", \"value\": $json.soil_pct + \"%\" },\n        { \"title\": \"🆔 Sensor:\", \"value\": $json.device_id },\n        { \"title\": \"🤖 IA Advice:\", \"value\": $json.ia_analysis }\n      ]\n    }\n  ],\n  \"actions\": [\n    {\n      \"type\": \"Action.Http\",\n      \"title\": \"💧 Activar Riego\",\n      \"url\": \"http://34.175.53.215:5000/irrigation/activate\",\n      \"method\": \"POST\",\n      \"body\": \"{\\\"device_id\\\": \\\"\" + $json.device_id + \"\\\"}\"\n    }\n  ],\n  \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n})\n}}",
+        "options": {}
+      },
+      "id": "36f0eee8-a791-46dd-a320-5200045773d2",
+      "name": "Alerta Teams con IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        720,
+        160
+      ]
+    }
+  ],
+  "connections": {
+    "Vigilar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Consultar Telemetría Madrid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Telemetría Madrid": {
+      "main": [
+        [
+          {
+            "node": "¿Humedad < 20%?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Humedad < 20%?": {
+      "main": [
+        [
+          {
+            "node": "Alerta Teams con IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

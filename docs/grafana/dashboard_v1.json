@@ -816,7 +816,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ts AS \"time\",\n  temperature_c AS \"Temperatura\",\n  humidity_pct AS \"Humedad\"\nFROM agro_telemetry\nORDER BY ts DESC\nLIMIT 1;",
+          "rawSql": "SELECT\n  ts AS \"time\",\n  temperature_c AS \"Temperatura\",\n  humidity_pct AS \"Humedad\"\nFROM agro_telemetry\nWHERE ts > NOW() - INTERVAL '1 hour'\nORDER BY ts ASC;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -899,7 +899,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT AVG(temperature_c) \nFROM agro_telemetry \nWHERE ts > NOW() - INTERVAL '24 hours';",
+          "rawSql": "SELECT AVG(temperature_c) FROM agro_telemetry WHERE ts > NOW() - INTERVAL '1 hour';",
           "refId": "A",
           "sql": {
             "columns": [
@@ -982,7 +982,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT AVG(vpd_kpa) \nFROM agro_telemetry \nWHERE ts > NOW() - INTERVAL '24 hours';",
+          "rawSql": "SELECT AVG(vpd_kpa) FROM agro_telemetry WHERE ts > NOW() - INTERVAL '1 hour';",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1063,7 +1063,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT device_id) AS \"value\"\nFROM agro_telemetry\nWHERE ts > NOW() - INTERVAL '2 hours';",
+          "rawSql": "SELECT \n  COUNT(DISTINCT device_id) AS \"value\"\nFROM agro_telemetry\nWHERE ts > NOW() - INTERVAL '10 minutes';",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1100,12 +1100,12 @@
     "list": []
   },
   "time": {
-    "from": "now-12h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "Europe/Madrid",
   "title": "🌱 AgroSentinel - Dashboard Completo",
   "uid": "agrosentinel_complete",
-  "version": 18
+  "version": 13
 }

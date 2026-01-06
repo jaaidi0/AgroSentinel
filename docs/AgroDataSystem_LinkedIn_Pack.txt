@@ -1,0 +1,46 @@
+============================================================
+   AGRODATASYSTEM - INFORME TÉCNICO & PACK PROFESIONAL 2025
+============================================================
+Fecha: 25 de diciembre de 2025
+Autor: EL MOSTAPHA JAAIDI
+Estado: Standby Optimizado (Coste Cloud: €0)
+------------------------------------------------------------
+
+1. INFORME DE ESTADO DEL PROYECTO (ROADMAP)
+-------------------------------------------
+* Adquisición de Datos (90%): Sistema de telemetría simulada 
+  funcional; listo para integración de sensores físicos (ESP32).
+* Base de Datos Central (100%): Arquitectura PostgreSQL en 
+  Azure Madrid configurada y en modo ahorro (Stopped).
+* Pipelines ETL (75%): Limpieza y normalización de datos 
+  en curso; reto actual en orquestación automatizada.
+* Análisis ML (10%): Fase de exploración iniciada; requiere 
+  acumulación de datasets históricos para modelos predictivos.
+* Infraestructura (95%): Entorno Dockerizado con persistencia 
+  centralizada en carpetas de datos locales (/data).
+
+2. PERFIL PROFESIONAL (LinkedIn "Acerca de")
+--------------------------------------------
+"Especialista en conectar la biología vegetal con la ingeniería de datos. 
+Lidero el proyecto AgroSentinel, un ecosistema IoT híbrido que integra 
+telemetría en tiempo real con analítica avanzada en la nube. Experto 
+en FinOps agrícola, optimizando infraestructuras en Azure Madrid 
+bajo principios de alta disponibilidad y bajo coste."
+
+3. APTITUDES TÉCNICAS (Top Skills)
+----------------------------------
+* FinOps para IoT Agrícola (Azure Optimization)
+* Automatización de Workflows con n8n
+* Ingeniería de Datos de Series Temporales (TimescaleDB)
+* Docker & Container Management (Volume Mapping)
+* Visualización de KPIs Agronómicos (Grafana/VPD)
+* Implementación de Algoritmos Fisiológicos (Fórmula de Tetens)
+
+4. PRÓXIMOS PASOS ESTRATÉGICOS
+------------------------------
+* Integración de Hardware: Sensores reales vía Arduino IDE.
+* Sincronización Offline: Desarrollo de caché local en n8n.
+* Escalabilidad: Implementación de CI/CD para despliegues rápidos.
+* Inteligencia Artificial: Modelado de riesgo de plagas y heladas. [cite: 2025-12-11]
+
+============================================================

@@ -1,4 +1,6 @@
+import asyncio
 import os
+import sys
 import math
 import logging
 import datetime as dt
@@ -7,6 +9,9 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
+# CRITICAL FIX: Añadir python_worker al path de Python
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 # --- CONFIGURACIÓN PROFESIONAL ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,9 +19,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# --- IA CONFIG (SOLUCIÓN DEFINITIVA ERROR 404) ---
+# --- IA CONFIG ---
 GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
-# Nombre limpio para evitar conflictos de URL en v1beta
 MODEL_NAME = 'gemini-1.5-flash' 
 
 genai.configure(api_key=GEMINI_KEY)
@@ -36,7 +40,7 @@ def get_engine():
     user = os.getenv("DB_USER", "postgres")
     pw = os.getenv("DB_PASSWORD", "AgroUJI2025")
     db = os.getenv("DB_NAME", "agrodata")
-    host = os.getenv("DB_HOST", "database") # Sincronizado con docker-compose
+    host = os.getenv("DB_HOST", "database")
     url = f"postgresql+psycopg2://{user}:{pw}@{host}:5432/{db}"
     return create_engine(url, pool_size=15, max_overflow=20, pool_pre_ping=True)
 
@@ -101,6 +105,39 @@ def ingest():
         return jsonify({"status": "stored", "vpd": vpd, "ia_advice": advice}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+# Importar módulo de video con estrategias múltiples
+try:
+    from video import produce_video
+    logger.info("✅ Módulo de video importado correctamente")
+except ImportError as e:
+    logger.error(f"❌ No se pudo importar el módulo de video: {e}")
+    produce_video = None
+
+@app.route("/generate-video", methods=["POST"])
+def generate_video():
+    """Endpoint principal para generación de video"""
+    if produce_video is None:
+        return jsonify({"error": "Video generation module not available"}), 503
+    
+    data = request.get_json(silent=True) or {}
+    guion = data.get("text", "Reporte AgroData")
+    vpd = data.get("vpd", 0)
+    temp = data.get("temp", 0)
+    
+    try:
+        logger.info(f"🎬 Iniciando generación de video | VPD: {vpd} | Temp: {temp}")
+        archivo = asyncio.run(produce_video(guion, vpd, temp))
+        logger.info(f"✅ Video generado: {archivo}")
+        return jsonify({"status": "success", "video": archivo}), 200
+    except Exception as e:
+        logger.error(f"❌ Error en generación de video: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/render_video", methods=["POST"])
+def render_video():
+    """Alias para compatibilidad con n8n"""
+    return generate_video()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

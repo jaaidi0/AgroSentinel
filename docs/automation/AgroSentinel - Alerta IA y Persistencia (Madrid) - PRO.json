@@ -1,0 +1,131 @@
+{
+  "name": "AgroSentinel - Alerta IA y Persistencia (Madrid) - PRO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "4530a2db-1a3b-40fb-89d4-7901b8bd02ed",
+      "name": "Vigilar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -624,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT device_id, soil_pct, ia_analysis FROM agro_telemetry ORDER BY ts DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "5f150ede-bd09-4f2d-8603-8f60f5b172cf",
+      "name": "Consultar Telemetría Madrid",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        176
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "fK5b0ti68jUxc8dQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.soil_pct }}",
+              "value2": 20
+            }
+          ]
+        }
+      },
+      "id": "a1ab6bcf-485a-48e4-b0c3-c985a6a42da3",
+      "name": "¿Humedad < 20%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://defaultef4a684e81b5491ca98ec7b31be6c4.69.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6aaab9c6476444c48eaf24f11556761c/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=cwxEbEMJWMLTiZzW1WSqMpz3cKbcOtZsD0B24eY4rOI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \nJSON.stringify({\n  \"type\": \"AdaptiveCard\",\n  \"version\": \"1.4\",\n  \"body\": [\n    { \"type\": \"TextBlock\", \"text\": \"🚨 ALERTA AGROSENTINEL - NIVEL CRÍTICO\", \"weight\": \"Bolder\", \"color\": \"Attention\", \"size\": \"Large\" },\n    { \"type\": \"FactSet\", \"facts\": [\n        { \"title\": \"📉 Humedad Suelo:\", \"value\": $json.soil_pct + \"%\" },\n        { \"title\": \"🆔 Sensor:\", \"value\": $json.device_id },\n        { \"title\": \"🤖 IA Advice:\", \"value\": $json.ia_analysis }\n      ]\n    }\n  ],\n  \"actions\": [\n    {\n      \"type\": \"Action.Http\",\n      \"title\": \"💧 Activar Riego\",\n      \"url\": \"http://34.175.53.215:5000/irrigation/activate\",\n      \"method\": \"POST\",\n      \"body\": JSON.stringify({\"device_id\": $json.device_id})\n    }\n  ],\n  \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n})\n}}",
+        "options": {}
+      },
+      "id": "3d2549ed-0cb5-4053-88be-c5cbaf3442be",
+      "name": "Alerta Teams con IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        144,
+        144
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Vigilar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Consultar Telemetría Madrid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Telemetría Madrid": {
+      "main": [
+        [
+          {
+            "node": "¿Humedad < 20%?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Humedad < 20%?": {
+      "main": [
+        [
+          {
+            "node": "Alerta Teams con IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "74856c81-5cdb-4301-a31f-209e6f8c2987",
+  "meta": {
+    "instanceId": "2fc9b13bd5d2b1577f18774bf198d7e0597fb7b252dd4cbdc68fe077db518472"
+  },
+  "id": "PS7wzYdSU47IASB0",
+  "tags": []
+}

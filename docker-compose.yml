@@ -6,9 +6,15 @@ services:
     env_file: .env 
     ports:
       - "5000:5000"
+    # Aumentamos el timeout a 120 para que FFmpeg termine sin que Gunicorn lo mate
     command: gunicorn --bind 0.0.0.0:5000 --timeout 120 python_worker.main:app
+    volumes:
+      - .:/app # Sincroniza tu código
+      - ./python_worker/videos_generados:/app/videos_generados # AQUÍ se guardarán los vídeos
     depends_on:
       - database
+    networks:
+      - agro_network
 
   database:
     image: postgres:15
@@ -22,17 +28,21 @@ services:
       - ./data/postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - agro_network
 
   n8n:
     image: n8nio/n8n:latest
     container_name: agrodatasystem-n8n-1
     restart: always
     environment:
-      - N8N_USER_MANAGEMENT_DISABLED=true  # <--- ESTO QUITA EL LOGIN TOTALMENTE
+      - N8N_USER_MANAGEMENT_DISABLED=true
     ports:
       - "5678:5678"
     volumes:
       - ./data/n8n_data:/home/node/.n8n
+    networks:
+      - agro_network
 
   grafana:
     image: grafana/grafana:latest
@@ -40,3 +50,10 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    networks:
+      - agro_network
+
+# Definimos una red interna para que se vean por nombre (api, database, etc.)
+networks:
+  agro_network:
+    driver: bridge

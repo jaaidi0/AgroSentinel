@@ -1,23 +1,31 @@
-# Entorno Virtual (CRÍTICO: Azure no lo quiere)
+# Entornos Virtuales
 venv/
+videoenv/
 antenv/
 env/
 
-# Datos y Persistencia
+# Datos de Contenedores (Persistencia local)
+data/
 postgres_data/
 grafana_data/
 n8n_data/
-data/
 
-# Secretos y Logs
+# Archivos de Video Generados (Evita subir Gigas de video)
+python_worker/videos_generados/
+videos_generados/
+temp_video.mp4
+
+# Secretos y Configuración
 .env
-*.log
+.env.example  # (A veces se sube el .example vacío, pero el .env NUNCA)
+
+# Python y Logs
 __pycache__/
 *.pyc
+*.log
 
-# Backups y Basura
+# Backups y Comprimidos
 backups/
+archive_old/
 *.zip
 *.tar.gz
-docs/
-tools/

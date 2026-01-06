@@ -1,0 +1,12 @@
+CONTENIDO PROFESIONAL PARA LINKEDIN - PROYECTO AGROSENTINEL
+
+ACERCA DE:
+Especialista en conectar la biología vegetal con la ingeniería de datos... [Copia el resto del párrafo arriba]
+
+APTITUDES:
+1. FinOps para IoT Agrícola
+2. Automatización n8n
+3. Ingeniería de Datos (TimescaleDB)
+4. Docker Volume Mapping
+5. Grafana Dashboard Design
+6. Algoritmos VPD (Tetens)
