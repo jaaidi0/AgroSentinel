@@ -1,54 +1,51 @@
-# 🌿 AgroSentinel v1.3 | Climate Intelligence System
+# 🌿 AgroSentinel v1.4 | Multi-Cloud AI Intelligence
 
 <p align="center">
   <img src="static/dashboard.png" alt="AgroSentinel Dashboard" width="800">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Release-v1.3_Madrid-7289da?style=for-the-badge&logo=github" alt="Release">
+  <img src="https://img.shields.io/badge/Release-v1.4_Frankfurt-success?style=for-the-badge&logo=github" alt="Release">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Cloud-Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="GCP">
-  <img src="https://img.shields.io/badge/IA-Gemini_Flash-orange?style=for-the-badge&logo=google-gemini&logoColor=white" alt="Gemini">
+  <img src="https://img.shields.io/badge/Cloud-Hybrid_GCP_&_DigitalOcean-blue?style=for-the-badge&logo=digitalocean&logoColor=white" alt="Hybrid Cloud">
+  <img src="https://img.shields.io/badge/IA-Gemini_2.5_Flash-orange?style=for-the-badge&logo=google-gemini&logoColor=white" alt="Gemini">
 </p>
 
 ---
 
 ## 🛰️ Visión General
-**AgroSentinel** no es solo una estación meteorológica; es una herramienta de **Inteligencia Biológica**. Fusiono la fisiología vegetal con la ingeniería de datos para prevenir el estrés hídrico en tiempo real mediante el cálculo preciso del **VPD (Vapor Pressure Deficit)**.
+**AgroSentinel** ha evolucionado. De una estación local a una infraestructura **Multi-Cloud** distribuida. Fusiono la fisiología vegetal con la ingeniería de datos para prevenir el estrés hídrico en tiempo real mediante el cálculo preciso del **VPD (Vapor Pressure Deficit)** y diagnósticos generados por IA.
 
 > "Del microscopio al teclado: ciencia convertida en sistemas inteligentes para la agricultura."
 
 ---
 
-## ✨ Características Destacadas (v1.3)
+## ✨ Características v1.4 (The Frankfurt Update)
 
 | Funcionalidad | Descripción Técnica | Impacto |
 | :--- | :--- | :--- |
-| **🎬 Video Reports** | Renderizado automático con **FFmpeg** y lógica Python. | Visualización instantánea del estado del cultivo. |
-| **🧠 Gemini IA** | Diagnóstico avanzado de salud vegetal (Google Gemini 1.5). | Traducción de datos crudos a lenguaje agronómico. |
-| **🌍 Cloud Native** | Arquitectura distribuida desplegada en **GCP Madrid**. | Resiliencia total y latencia mínima para el sur de Europa. |
-| **🤖 n8n Workflows** | Orquestación de eventos y alertas en **Microsoft Teams**. | Automatización total de la cadena de decisión. |
+| **🎬 AI Video Reports** | Generación automática de vídeo con **FFmpeg**, **Edge-TTS** y lógica Python. | Reportes visuales inmediatos del estado del cultivo. |
+| **🧠 Gemini 2.5 Flash** | Cerebro narrativo que interpreta datos biológicos complejos. | Diagnósticos expertos en lenguaje agronómico humano. |
+| **🌍 Multi-Cloud Core** | Despliegue híbrido: **GCP (Madrid)** para telemetría y **DigitalOcean (Frankfurt)** para IA. | Resiliencia internacional y procesamiento distribuido. |
+| **🤖 n8n Automation** | Orquestación total entre PostgreSQL, Gemini y sistemas de alerta. | Cero intervención humana en la cadena de decisión. |
 
 ---
 
-## 🏗️ Arquitectura de Datos
+## 🏗️ Arquitectura del Sistema
 
-
-
-1. **Captura:** Nodos IoT (ESP32) enviando telemetría vía API.
-2. **Procesamiento:** Motor de cálculo VPD (Tetens Equation) en contenedores **Docker**.
-3. **Análisis:** Evaluación de estrés hídrico por modelos de IA.
-4. **Output:** Generación de video con locución y dashboards dinámicos en **Grafana Cloud**.
+1. **Nodo Madrid (GCP):** Ingesta de datos IoT de baja latencia.
+2. **Nodo Frankfurt (DigitalOcean):** Procesamiento pesado, Renderizado de vídeo y Orquestación n8n.
+3. **Análisis:** Motor de cálculo VPD basado en la ecuación de Tetens.
+4. **Visualización:** Dashboards en **Grafana Cloud** y reportes multimedia automáticos.
 
 ---
 
 ## 🔬 El Corazón del Sistema: Control de VPD
-Entendemos que la temperatura no lo es todo. El **VPD** es el motor de la transpiración:
+El **VPD** es el motor de la transpiración. AgroSentinel monitoriza estos rangos críticos:
 
-* 🔵 **0.4 - 0.8 kPa:** Bajo riesgo (Humedad alta, riesgo fúngico).
-* 🟢 **0.8 - 1.2 kPa:** Zona óptima de crecimiento.
-* 🟡 **1.2 - 1.6 kPa:** Transpiración elevada.
-* 🔴 **> 1.6 kPa:** **ALERTA AGROSENTINEL**. Generación automática de video-reporte.
+* 🔵 **0.4 - 0.8 kPa:** Riesgo fúngico (Humedad excesiva).
+* 🟢 **0.8 - 1.2 kPa:** **ZONA ÓPTIMA** de crecimiento.
+* 🔴 **> 1.6 kPa:** **ALERTA CRÍTICA**. Activación del motor de IA y generación de vídeo-reporte.
 
 ---
 
@@ -56,19 +53,22 @@ Entendemos que la temperatura no lo es todo. El **VPD** es el motor de la transp
 
 | Área | Tecnologías |
 | :--- | :--- |
-| **Lenguaje** | `Python 3.11`, `FastAPI` |
-| **IA & Automatización** | `Google Gemini 1.5`, `n8n` |
-| **Infraestructura** | `Docker`, `Docker Compose`, `GCP (Madrid)` |
-| **Multimedia** | `FFmpeg`, `Gunicorn` |
-| **Visualización** | `Grafana Cloud`, `PostgreSQL` |
+| **Backend** | `Python 3.11`, `FastAPI`, `Gunicorn` |
+| **IA & Orquestación** | `Google Gemini 2.5 Flash`, `n8n` |
+| **Infraestructura** | `Docker`, `Docker Compose`, `DigitalOcean`, `GCP` |
+| **Multimedia** | `FFmpeg`, `Edge-TTS`, `Pexels API` |
+| **Data** | `PostgreSQL`, `Grafana` |
 
 ---
 
-## 🚀 Despliegue en 3 minutos
+## 🚀 Despliegue Rápido
 
 ```bash
-# Clonar el ecosistema
+# 1. Clonar el ecosistema
 git clone [https://github.com/jaaidi0/AgroSentinel.git](https://github.com/jaaidi0/AgroSentinel.git)
 
-# Levantar microservicios
+# 2. Configurar variables de entorno
+cp .env.example .env
+
+# 3. Levantar la infraestructura Multi-Cloud
 docker compose up -d --build

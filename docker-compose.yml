@@ -37,6 +37,7 @@ services:
     restart: always
     environment:
       - N8N_USER_MANAGEMENT_DISABLED=true
+      - N8N_SECURE_COOKIE=false
     ports:
       - "5678:5678"
     volumes:
