@@ -1,10 +1,9 @@
+google-genai
 flask
 gunicorn
 sqlalchemy
 psycopg2-binary
 requests
 python-dotenv
-google-generativeai
-edge-tts
-requests
 Pillow
+edge-tts

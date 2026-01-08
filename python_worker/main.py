@@ -4,38 +4,50 @@ import sys
 import math
 import logging
 import datetime as dt
-import google.generativeai as genai
+from google import genai  # Generative AI SDK 2026
 from flask import Flask, request, jsonify
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+import time
 
-# CRITICAL FIX: Añadir python_worker al path de Python
+# Path fix
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# --- CONFIGURACIÓN PROFESIONAL ---
+# --- CONFIGURATION ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# --- IA CONFIG ---
+# --- IA CONFIGURATION ---
 GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
-MODEL_NAME = 'gemini-1.5-flash' 
+MODEL_NAME = None
 
-genai.configure(api_key=GEMINI_KEY)
+client = None
+if GEMINI_KEY:
+    try:
+        # Initialize client
+        client = genai.Client(api_key=GEMINI_KEY, http_options={'api_version': 'v1beta'})
+        logger.info("🧠 IA GenAI vinculada con éxito")
 
-try:
-    if GEMINI_KEY:
-        ai_model = genai.GenerativeModel(model_name=MODEL_NAME)
-        logger.info(f"🧠 IA vinculada con éxito: {MODEL_NAME}")
-    else:
-        ai_model = None
-except Exception as e:
-    logger.error(f"❌ Error al inicializar IA: {e}")
-    ai_model = None
+        # Fetch and set the model
+        models = client.models.list()
+        for model in models:
+            if 'gemini-2.5-flash' in model.name:
+                MODEL_NAME = model.name
+                logger.info(f"Usando modelo: {MODEL_NAME}")
+                break
 
-# --- PERSISTENCIA ROBUSTA ---
+        if not MODEL_NAME:
+            raise ValueError("No se encontró un modelo válido como 'gemini-2.5-flash'.")
+
+    except Exception as e:
+        logger.error(f"❌ Error al conectar con Gemini: {e}")
+else:
+    logger.error("Gemini API key no configurada. Por favor, verifica el archivo .env.")
+
+# --- DATABASE CONFIGURATION ---
 def get_engine():
     user = os.getenv("DB_USER", "postgres")
     pw = os.getenv("DB_PASSWORD", "AgroUJI2025")
@@ -48,31 +60,7 @@ engine = get_engine()
 
 @app.route('/')
 def home():
-    current_ip = request.host.split(':')[0]
-    return f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8"><title>AgroSentinel PRO</title>
-        <style>
-            body {{ font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
-            .card {{ background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border-top: 8px solid #2e7d32; width: 380px; }}
-            .status {{ color: #2e7d32; font-weight: bold; margin: 1.5rem 0; font-size: 1.2rem; }}
-            .btn {{ display: block; padding: 14px; margin: 10px 0; border-radius: 10px; text-decoration: none; font-weight: 600; color: white; transition: 0.3s; }}
-            .btn-grafana {{ background: #ef6c00; }}
-            .btn-n8n {{ background: #1976d2; }}
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>🌱 AgroSentinel v1.5</h1>
-            <div class="status">🟢 NODO MADRID ONLINE</div>
-            <a href="http://{current_ip}:3000" class="btn btn-grafana">📊 Panel de Control</a>
-            <a href="http://{current_ip}:5678" class="btn btn-n8n">🤖 Automatización n8n</a>
-        </div>
-    </body>
-    </html>
-    """, 200
+    return jsonify({"service": "AgroSentinel PRO", "status": "online"}), 200
 
 @app.route("/ingest", methods=["POST"])
 def ingest():
@@ -81,63 +69,65 @@ def ingest():
         t = float(data.get("temperaturec", 25))
         rh = float(data.get("humiditypct", 50))
         soil = float(data.get("soilpct", 30))
-        
-        # Cálculo de VPD
+
+        # Calculate VPD
         es = 0.6108 * math.exp((17.27 * t) / (t + 237.3))
         vpd = round(es * (1.0 - rh / 100.0), 3)
-        
-        # IA con Fallback Silencioso
-        advice = "Revisar transpiración."
-        if ai_model:
-            try:
-                prompt = f"Como agrónomo experto: T{t}C, H{rh}%, VPD{vpd}kPa, Suelo{soil}%. Da un consejo técnico de 8 palabras."
-                advice = ai_model.generate_content(prompt).text.strip()
-            except:
-                advice = "IA analizando datos bióticos..."
 
-        # Guardado en DB
+        prompt = (
+            f"SISTEMA: AgroSentinel\n"
+            f"DATOS: T:{t}°C | HR:{rh}% | VPD:{vpd}kPa | Suelo:{soil}%\n"
+            f"TAREA: Diagnóstico técnico (máx 10 palabras)."
+        )
+
+        advice = "Diagnóstico por defecto: IA no disponible."
+        if client and MODEL_NAME:
+            for attempt in range(3):  # Retry up to 3 times for availability
+                try:
+                    logger.info(f"Intentando generar contenido IA (intento {attempt+1})...")
+                    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+                    advice = response.text.strip()
+                    break
+                except Exception as e:
+                    logger.error(f"Error IA (intento {attempt+1}): {e}")
+                    if "503" in str(e):
+                        time.sleep(2 ** attempt)  # Exponential backoff
+                    else:
+                        break  # Other errors should not retry
+
         with engine.begin() as conn:
             conn.execute(text("""
-                INSERT INTO agro_telemetry (ts, device_id, temperature_c, humidity_pct, soil_pct, vpd_kpa, source, ia_analysis) 
+                INSERT INTO agro_telemetry (ts, device_id, temperature_c, humidity_pct, soil_pct, vpd_kpa, source, ia_analysis)
                 VALUES (:ts, :id, :t, :rh, :s, :v, :src, :ia)"""),
-                {"ts": dt.datetime.now(dt.timezone.utc), "id": data.get("deviceid", "ESP32_UJI"), "t": t, "rh": rh, "s": soil, "v": vpd, "src": "madrid-prod", "ia": advice})
-        
+                {
+                    "ts": dt.datetime.now(dt.timezone.utc),
+                    "id": data.get("deviceid", "ESP32_UJI"),
+                    "t": t, "rh": rh, "s": soil, "v": vpd,
+                    "src": "madrid-prod", "ia": advice
+                })
+
         return jsonify({"status": "stored", "vpd": vpd, "ia_advice": advice}), 201
     except Exception as e:
+        logger.error(f"Error en ingest: {e}")
         return jsonify({"error": str(e)}), 400
 
-# Importar módulo de video con estrategias múltiples
+# Video module
 try:
     from video import produce_video
-    logger.info("✅ Módulo de video importado correctamente")
-except ImportError as e:
-    logger.error(f"❌ No se pudo importar el módulo de video: {e}")
+    logger.info("✅ Módulo de video cargado")
+except ImportError:
     produce_video = None
 
 @app.route("/generate-video", methods=["POST"])
 def generate_video():
-    """Endpoint principal para generación de video"""
     if produce_video is None:
-        return jsonify({"error": "Video generation module not available"}), 503
-    
+        return jsonify({"error": "Módulo de video no disponible"}), 503
     data = request.get_json(silent=True) or {}
-    guion = data.get("text", "Reporte AgroData")
-    vpd = data.get("vpd", 0)
-    temp = data.get("temp", 0)
-    
     try:
-        logger.info(f"🎬 Iniciando generación de video | VPD: {vpd} | Temp: {temp}")
-        archivo = asyncio.run(produce_video(guion, vpd, temp))
-        logger.info(f"✅ Video generado: {archivo}")
+        archivo = asyncio.run(produce_video(data.get("text", "Reporte"), data.get("vpd", 0), data.get("temp", 0)))
         return jsonify({"status": "success", "video": archivo}), 200
     except Exception as e:
-        logger.error(f"❌ Error en generación de video: {e}")
         return jsonify({"error": str(e)}), 500
-
-@app.route("/render_video", methods=["POST"])
-def render_video():
-    """Alias para compatibilidad con n8n"""
-    return generate_video()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
