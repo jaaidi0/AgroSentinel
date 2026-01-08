@@ -71,4 +71,4 @@ git clone [https://github.com/jaaidi0/AgroSentinel.git](https://github.com/jaaid
 cp .env.example .env
 
 # 3. Levantar la infraestructura Multi-Cloud
-docker compose up -d --build
+docker compose up -d --build# Este es un cambio en nueva-feature
